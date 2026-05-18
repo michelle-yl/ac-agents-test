@@ -1,0 +1,63 @@
+{
+  "poecam_ln2": {
+    "online": true,
+    "alerts": [],
+    "lastChange": "2026-02-01T13:54:00Z",
+    "lastSeen": "2026-02-01T17:16:56Z",
+    "lastReading": {
+      "level": 6
+    },
+    "consecutiveDownCount": 0
+  },
+  "Cytomat": {
+    "online": true,
+    "alerts": [],
+    "lastChange": "2026-01-31T02:22:00Z",
+    "lastSeen": "2026-02-01T17:19:51Z",
+    "lastReading": {
+      "temperature": 37.0,
+      "humidity": 2.4
+    },
+    "consecutiveDownCount": 0
+  },
+  "M5PoeCam_2": {
+    "online": true,
+    "alerts": [],
+    "lastChange": "2026-01-31T02:22:00Z",
+    "lastSeen": "2026-02-01T17:19:54Z",
+    "consecutiveDownCount": 0
+  },
+  "pico-poe_2": {
+    "online": true,
+    "alerts": [],
+    "lastChange": "2026-01-31T02:22:00Z",
+    "lastSeen": "2026-02-01T17:20:00Z",
+    "lastReading": {
+      "temperature": 37.35,
+      "humidity": 88.62
+    },
+    "consecutiveDownCount": 0
+  },
+  "Cytation_C10": {
+    "online": false,
+    "alerts": [],
+    "lastChange": "2026-01-31T02:22:00Z",
+    "reason": "last_seen > 4 days",
+    "lastSeen": "2026-01-28T01:15:25Z",
+    "consecutiveDownCount": 0
+  },
+  "pico-poe_1": {
+    "online": false,
+    "alerts": [],
+    "lastChange": "2026-01-31T02:22:00Z",
+    "reason": "last_seen > 13 days",
+    "lastSeen": "2026-01-19T16:38:17Z",
+    "consecutiveDownCount": 0
+  },
+  "_lastCheck": "2026-02-01T17:20:18Z",
+  "_summary": "4 online, 2 offline (unchanged)",
+  "_alertPolicy": {
+    "consecutiveDownThreshold": 2,
+    "note": "Only alert after 2 consecutive DOWN scans"
+  }
+}

@@ -1,17 +1,5 @@
 """
-Future Tasks
-- response times 
-    - background running
-    - summaries sent to 
-- analysis
-- sort agents into roles
-    - research, quick answering
-- knowledge graphs
-- make sure compatibility
-    - eg. openclaw not
-    - but autonomy good
 
-- ssh into folders
 
 Agentic RAG with LangGraph — Anthropic Claude for chat; local embeddings for retrieval.
 

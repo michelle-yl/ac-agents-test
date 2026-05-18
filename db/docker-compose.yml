@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: angie-monitoring-replica
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-angie}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-angie}
+      POSTGRES_DB: ${POSTGRES_DB:-angie_monitoring_replica}
+    volumes:
+      - angie_monitoring_pgdata:/var/lib/postgresql/data
+      - ./schema/001_monitoring.sql:/docker-entrypoint-initdb.d/001_monitoring.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-angie} -d ${POSTGRES_DB:-angie_monitoring_replica}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  angie_monitoring_pgdata:

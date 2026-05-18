@@ -1,0 +1,158 @@
+{
+  "lastCheck": "2026-02-01T17:21:06Z",
+  "checkStatus": "healthy",
+  "checkNote": "All services UP",
+  "services": {
+    "Prefect": {
+      "up": true,
+      "host": "NAS server",
+      "ip": "192.168.142.193",
+      "port": 4200,
+      "consecutiveDownCount": 0
+    },
+    "PGadmin": {
+      "up": true,
+      "host": "NAS server",
+      "ip": "192.168.142.193",
+      "port": 30056,
+      "consecutiveDownCount": 0
+    },
+    "Redis": {
+      "up": true,
+      "host": "NAS server",
+      "ip": "192.168.142.193",
+      "port": 30070,
+      "note": "TCP-only, not reachable from sandbox",
+      "consecutiveDownCount": 0
+    },
+    "Redis-Insight": {
+      "up": true,
+      "host": "NAS server",
+      "ip": "192.168.142.193",
+      "port": 5540,
+      "consecutiveDownCount": 0
+    },
+    "Portainer": {
+      "up": true,
+      "host": "NAS server",
+      "ip": "192.168.142.193",
+      "port": 31015,
+      "protocol": "https",
+      "note": "Requires HTTPS with -k flag",
+      "consecutiveDownCount": 0
+    },
+    "Postgres-Lab": {
+      "up": true,
+      "host": "NAS server",
+      "ip": "192.168.142.193",
+      "port": 5433,
+      "note": "TCP-only, not reachable from sandbox",
+      "consecutiveDownCount": 0
+    },
+    "Postgres_prefect": {
+      "up": true,
+      "host": "NAS server",
+      "ip": "192.168.142.193",
+      "port": 5432,
+      "note": "TCP-only, not reachable from sandbox",
+      "consecutiveDownCount": 0
+    },
+    "Mosquitto MQTT": {
+      "up": true,
+      "host": "NAS server",
+      "ip": "192.168.142.193",
+      "port": 1883,
+      "note": "TCP-only, not reachable from sandbox",
+      "consecutiveDownCount": 0
+    },
+    "Speedtest": {
+      "up": true,
+      "host": "NAS server",
+      "ip": "192.168.142.193",
+      "port": 8080,
+      "consecutiveDownCount": 0
+    },
+    "Dashboard": {
+      "up": true,
+      "host": "GPU workstation",
+      "ip": "192.168.142.185",
+      "port": 7001,
+      "consecutiveDownCount": 0
+    },
+    "Frigate": {
+      "up": true,
+      "host": "GPU workstation",
+      "ip": "192.168.142.185",
+      "port": 5000,
+      "consecutiveDownCount": 0
+    },
+    "Imaging DB": {
+      "up": true,
+      "host": "GPU workstation",
+      "ip": "192.168.142.185",
+      "port": 8080,
+      "consecutiveDownCount": 0
+    },
+    "AC-pick-bot-PF3400": {
+      "up": true,
+      "host": "zima-pf3400",
+      "ip": "192.168.11.20",
+      "port": 8080,
+      "consecutiveDownCount": 0
+    },
+    "AC-pick-bot-PF3400-backend": {
+      "up": true,
+      "host": "zima-pf3400",
+      "ip": "192.168.11.20",
+      "port": 8000,
+      "consecutiveDownCount": 0
+    },
+    "Cytomat control": {
+      "up": true,
+      "host": "zima_cytomat-1",
+      "ip": "192.168.11.15",
+      "port": 3000,
+      "consecutiveDownCount": 0
+    },
+    "Biomek Control Panel": {
+      "up": true,
+      "host": "biomek_dell_pc",
+      "ip": "192.168.11.10",
+      "port": 8080,
+      "consecutiveDownCount": 0
+    },
+    "Biomek backend": {
+      "up": true,
+      "host": "biomek_dell_pc",
+      "ip": "192.168.11.10",
+      "port": 8000,
+      "consecutiveDownCount": 0
+    },
+    "Lab Equipment DB": {
+      "up": true,
+      "host": "DGX_spark",
+      "ip": "192.168.11.27",
+      "port": 8020,
+      "consecutiveDownCount": 0
+    },
+    "Sensors DB": {
+      "up": true,
+      "host": "DGX_spark",
+      "ip": "192.168.11.27",
+      "port": 8021,
+      "consecutiveDownCount": 0
+    },
+    "RAG Service": {
+      "up": false,
+      "host": "localhost",
+      "ip": "127.0.0.1",
+      "port": 8765,
+      "consecutiveDownCount": 1,
+      "note": "First failure - monitoring"
+    }
+  },
+  "alertPolicy": {
+    "consecutiveDownThreshold": 2,
+    "note": "Only alert after 2 consecutive DOWN scans to avoid false positives"
+  }
+}

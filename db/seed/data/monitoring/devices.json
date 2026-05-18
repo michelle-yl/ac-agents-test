@@ -1,0 +1,7 @@
+{
+  "source": "database",
+  "query_url": "http://192.168.11.27:8020/tools/query",
+  "query_sql": "SELECT DISTINCT computer_name as name, REGEXP_REPLACE(pc_ip::text, '/\\d+$', '') as ip FROM v_pc_devices WHERE pc_ip IS NOT NULL",
+  "pingTimeoutSeconds": 3,
+  "pingCount": 2
+}

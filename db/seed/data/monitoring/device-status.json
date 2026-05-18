@@ -1,0 +1,134 @@
+{
+  "lastChecked": "2026-02-01T17:19:19Z",
+  "lastSuccessfulProbe": "2026-02-01T17:19:19Z",
+  "lastProbeResult": "success",
+  "probeNote": "TCP port probes via bash /dev/tcp",
+  "method": "tcp-port-check (SSH:22, SMB:445, RDP:3389)",
+  "devices": {
+    "192.168.11.27": {
+      "name": "DGX_spark",
+      "online": true,
+      "ssh": true,
+      "smb": false,
+      "rdp": false,
+      "ports": ["SSH"],
+      "lastChange": "2026-01-31T16:08:00Z",
+      "lastVerified": "2026-02-01T17:19:19Z",
+      "consecutiveDownCount": 0
+    },
+    "192.168.142.193": {
+      "name": "NAS_server",
+      "online": true,
+      "ssh": true,
+      "smb": true,
+      "rdp": false,
+      "ports": ["SSH", "SMB"],
+      "lastChange": "2026-01-31T16:08:00Z",
+      "lastVerified": "2026-02-01T17:19:19Z",
+      "consecutiveDownCount": 0
+    },
+    "192.168.142.185": {
+      "name": "GPU_workstation",
+      "online": true,
+      "ssh": true,
+      "smb": true,
+      "rdp": true,
+      "ports": ["SSH", "SMB", "RDP"],
+      "lastChange": "2026-01-31T16:08:00Z",
+      "lastVerified": "2026-02-01T17:19:19Z",
+      "consecutiveDownCount": 0
+    },
+    "192.168.11.10": {
+      "name": "biomek_dell_pc",
+      "online": false,
+      "ssh": false,
+      "smb": false,
+      "rdp": false,
+      "ports": null,
+      "lastChange": "2026-02-01T00:59:54Z",
+      "lastVerified": "2026-02-01T17:19:19Z",
+      "consecutiveDownCount": 19
+    },
+    "192.168.11.14": {
+      "name": "Cytation_NUC",
+      "online": true,
+      "ssh": false,
+      "smb": true,
+      "rdp": false,
+      "ports": ["SMB"],
+      "lastChange": "2026-02-01T00:59:54Z",
+      "lastVerified": "2026-02-01T17:19:19Z",
+      "consecutiveDownCount": 0
+    },
+    "192.168.1.2": {
+      "name": "Cytation_alt",
+      "online": true,
+      "ssh": false,
+      "smb": true,
+      "rdp": false,
+      "ports": ["SMB"],
+      "lastChange": "2026-02-01T00:59:54Z",
+      "lastVerified": "2026-02-01T17:19:19Z",
+      "consecutiveDownCount": 0
+    },
+    "192.168.142.197": {
+      "name": "dell-gpu-ur5",
+      "online": true,
+      "ssh": false,
+      "smb": true,
+      "rdp": false,
+      "ports": ["SMB"],
+      "lastChange": "2026-02-01T00:59:54Z",
+      "lastVerified": "2026-02-01T17:19:19Z",
+      "consecutiveDownCount": 0
+    },
+    "192.168.11.25": {
+      "name": "laptop_test",
+      "online": true,
+      "ssh": false,
+      "smb": true,
+      "rdp": false,
+      "ports": ["SMB"],
+      "lastChange": "2026-02-01T00:59:54Z",
+      "lastVerified": "2026-02-01T17:19:19Z",
+      "consecutiveDownCount": 0
+    },
+    "192.168.142.128": {
+      "name": "laptop_test_alt",
+      "online": false,
+      "ssh": false,
+      "smb": false,
+      "rdp": false,
+      "ports": null,
+      "lastChange": "2026-02-01T00:44:00Z",
+      "lastVerified": "2026-02-01T17:19:19Z",
+      "consecutiveDownCount": 19
+    },
+    "192.168.11.20": {
+      "name": "zima-pf3400",
+      "online": true,
+      "ssh": true,
+      "smb": true,
+      "rdp": false,
+      "ports": ["SSH", "SMB"],
+      "lastChange": "2026-02-01T00:59:54Z",
+      "lastVerified": "2026-02-01T17:19:19Z",
+      "consecutiveDownCount": 0
+    },
+    "192.168.11.15": {
+      "name": "zima_cytomat-1",
+      "online": true,
+      "ssh": true,
+      "smb": true,
+      "rdp": false,
+      "ports": ["SSH", "SMB"],
+      "lastChange": "2026-02-01T00:59:54Z",
+      "lastVerified": "2026-02-01T17:19:19Z",
+      "consecutiveDownCount": 0
+    }
+  },
+  "alertPolicy": {
+    "consecutiveDownThreshold": 2,
+    "note": "Only alert after 2 consecutive DOWN scans"
+  }
+}
