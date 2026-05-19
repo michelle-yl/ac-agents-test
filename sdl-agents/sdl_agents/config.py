@@ -22,6 +22,10 @@ def load_config() -> None:
 
 load_config()
 
+# Pytest forces mock integration when SDL_TEST_USE_MOCK_INTEGRATION=1 (see tests/conftest.py)
+if os.environ.get("SDL_TEST_USE_MOCK_INTEGRATION") == "1":
+    os.environ["SDL_INTEGRATION_MODE"] = "mock"
+
 
 def database_url() -> str:
     if url := os.environ.get("DATABASE_URL"):
@@ -42,13 +46,30 @@ def is_live_integration() -> bool:
     return integration_mode() == "live"
 
 
+def normalize_hermes_openai_base(raw: str) -> str:
+    """Hermes API server OpenAI root must be …/v1 (see Nous Hermes API Server docs)."""
+    u = raw.strip().rstrip("/")
+    if u.endswith("/v1"):
+        return u
+    return f"{u}/v1"
+
+
+def hermes_http_origin(openai_base: str) -> str:
+    """Scheme + host + port for GET /health (strip trailing /v1)."""
+    return openai_base.removesuffix("/v1")
+
+
 ANTHROPIC_CHAT_MODEL = os.environ.get("ANTHROPIC_CHAT_MODEL", "claude-sonnet-4-6")
 ANTHROPIC_GRADER_MODEL = os.environ.get("ANTHROPIC_GRADER_MODEL", "claude-haiku-4-5")
 HF_EMBEDDING_MODEL = os.environ.get(
     "HF_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2"
 )
-HERMES_BASE_URL = os.environ.get("HERMES_BASE_URL", "http://127.0.0.1:8080").rstrip("/")
+# OpenAI-compatible base: http://127.0.0.1:8642/v1 (default port per Hermes docs)
+HERMES_BASE_URL = normalize_hermes_openai_base(
+    os.environ.get("HERMES_BASE_URL", "http://127.0.0.1:8642")
+)
 HERMES_API_KEY = os.environ.get("HERMES_API_KEY", "")
+HERMES_MODEL = os.environ.get("HERMES_MODEL", "hermes-agent")
 OPENCLAW_BASE_URL = os.environ.get("OPENCLAW_BASE_URL", "http://localhost:18789").rstrip(
     "/"
 )

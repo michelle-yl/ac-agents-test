@@ -32,7 +32,37 @@ Hierarchy is defined in [../agents.md](../agents.md). Architectural reference: [
    python scripts/build_indices.py
    ```
 
-5. **Live integration (optional)** — set `SDL_INTEGRATION_MODE=live` and run Hermes + OpenClaw (see plan: Future live integration requirements).
+5. **Live integration (optional)** — set `SDL_INTEGRATION_MODE=live` and run Hermes + OpenClaw.
+
+### Hermes Agent (Nous) — API Server
+
+`sdl-agents` calls Hermes using the **OpenAI Chat Completions** API (`POST /v1/chat/completions`), not a custom `/v1/task` route. See the official guide: [Hermes API Server](https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server).
+
+1. In `~/.hermes/.env` on the machine running Hermes, enable the server and set a bearer key (example from docs):
+
+   ```
+   API_SERVER_ENABLED=true
+   API_SERVER_KEY=change-me-local-dev
+   ```
+
+2. Start the gateway: `hermes gateway` — you should see e.g. `[API Server] API server listening on http://127.0.0.1:8642`.
+
+3. In `sdl-agents/.env` (or env vars), align with that instance:
+
+   | Variable | Purpose |
+   |----------|---------|
+   | `HERMES_BASE_URL` | OpenAI API root host (default `http://127.0.0.1:8642`); normalized to `…/v1` automatically |
+   | `HERMES_API_KEY` | Same value as Hermes `API_SERVER_KEY` (Bearer token); omit only if your Hermes allows unauthenticated local access |
+   | `HERMES_MODEL` | Model name in requests (default `hermes-agent`) |
+
+4. Quick curl check (from Hermes docs):
+
+   ```bash
+   curl http://127.0.0.1:8642/v1/chat/completions \
+     -H "Authorization: Bearer YOUR_API_SERVER_KEY" \
+     -H "Content-Type: application/json" \
+     -d "{\"model\": \"hermes-agent\", \"messages\": [{\"role\": \"user\", \"content\": \"Hello!\"}], \"stream\": false}"
+   ```
 
 ## Run CLI
 

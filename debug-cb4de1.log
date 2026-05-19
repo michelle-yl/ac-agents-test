@@ -1,0 +1,1 @@
+{"sessionId": "cb4de1", "hypothesisId": "H1", "location": "hermes_client.py", "message": "hermes_run_task_pre_post", "data": {"task_type": "safety", "has_authorization_header": true, "api_key_length": 14, "chat_url": "http://127.0.0.1:8642/v1/chat/completions"}, "timestamp": 1779207110236}

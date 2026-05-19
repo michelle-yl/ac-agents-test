@@ -13,9 +13,12 @@ from sdl_agents.config import is_live_integration
 @pytest.mark.skipif(not is_live_integration(), reason="SDL_INTEGRATION_MODE!=live")
 @pytest.mark.asyncio
 async def test_hermes_live_health():
-    from sdl_agents.integrations.hermes_client import run_task
+    from sdl_agents.integrations.hermes_client import health_check, run_task
 
-    result = await run_task("ping", task_type="academic")
+    if not await health_check():
+        pytest.skip("Hermes gateway not reachable (GET /health or /v1/health)")
+
+    result = await run_task("Reply with exactly: pong", task_type="academic")
     assert result.get("text")
 
 

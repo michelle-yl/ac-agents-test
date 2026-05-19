@@ -11,8 +11,20 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-# Force mock integrations in unit tests unless integration marker
-os.environ.setdefault("SDL_INTEGRATION_MODE", "mock")
+# Before importing sdl_agents.config: force mock integration for non-integration tests
+# (developer sdl-agents/.env may set SDL_INTEGRATION_MODE=live).
+os.environ["SDL_TEST_USE_MOCK_INTEGRATION"] = "1"
+
+
+@pytest.fixture(autouse=True)
+def _sdl_integration_mode(request):
+    """Non-integration tests always use mock Hermes/OpenClaw; integration uses live."""
+    if request.node.get_closest_marker("integration"):
+        os.environ.pop("SDL_TEST_USE_MOCK_INTEGRATION", None)
+        os.environ["SDL_INTEGRATION_MODE"] = "live"
+    else:
+        os.environ["SDL_TEST_USE_MOCK_INTEGRATION"] = "1"
+        os.environ["SDL_INTEGRATION_MODE"] = "mock"
 
 
 @pytest.fixture
