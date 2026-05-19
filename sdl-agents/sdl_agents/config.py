@@ -1,4 +1,4 @@
-"""Load configuration from agent-langgraph/.env then local overrides."""
+"""Load configuration from sdl-agents/.env (optional repo-root .env first)."""
 
 from __future__ import annotations
 
@@ -9,13 +9,22 @@ from dotenv import load_dotenv
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SDL_AGENTS_ROOT = Path(__file__).resolve().parents[1]
-AGENT_LANGGRAPH_ENV = REPO_ROOT / "agent-langgraph" / ".env"
+REPO_ENV = REPO_ROOT / ".env"
 LOCAL_ENV = SDL_AGENTS_ROOT / ".env"
+
+_DEFAULT_SEED_URLS = (
+    "https://lilianweng.github.io/posts/2024-04-12-diffusion-video/",
+    "https://www.subtraction.com/",
+)
+
+SUPPORTED_DOC_EXTENSIONS = frozenset(
+    {".md", ".txt", ".csv", ".json", ".pdf", ".docx"}
+)
 
 
 def load_config() -> None:
-    if AGENT_LANGGRAPH_ENV.is_file():
-        load_dotenv(AGENT_LANGGRAPH_ENV)
+    if REPO_ENV.is_file():
+        load_dotenv(REPO_ENV)
     if LOCAL_ENV.is_file():
         load_dotenv(LOCAL_ENV, override=True)
 
@@ -59,12 +68,32 @@ def hermes_http_origin(openai_base: str) -> str:
     return openai_base.removesuffix("/v1")
 
 
+def seed_urls() -> list[str]:
+    raw = os.environ.get("SEED_URLS", "").strip()
+    if not raw:
+        return list(_DEFAULT_SEED_URLS)
+    return [u.strip() for u in raw.split(",") if u.strip()]
+
+
+def local_docs_dir() -> Path | None:
+    raw = os.environ.get("LOCAL_DOCS_DIR", "").strip()
+    if not raw:
+        return None
+    candidate = Path(raw).expanduser()
+    try:
+        resolved = candidate.resolve()
+    except OSError:
+        return None
+    if not resolved.is_dir():
+        return None
+    return resolved
+
+
 ANTHROPIC_CHAT_MODEL = os.environ.get("ANTHROPIC_CHAT_MODEL", "claude-sonnet-4-6")
 ANTHROPIC_GRADER_MODEL = os.environ.get("ANTHROPIC_GRADER_MODEL", "claude-haiku-4-5")
 HF_EMBEDDING_MODEL = os.environ.get(
     "HF_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2"
 )
-# OpenAI-compatible base: http://127.0.0.1:8642/v1 (default port per Hermes docs)
 HERMES_BASE_URL = normalize_hermes_openai_base(
     os.environ.get("HERMES_BASE_URL", "http://127.0.0.1:8642")
 )

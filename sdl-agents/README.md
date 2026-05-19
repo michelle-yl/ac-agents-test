@@ -15,7 +15,7 @@ Hierarchy is defined in [../agents.md](../agents.md). Architectural reference: [
    pip install -r requirements.txt
    ```
 
-2. **API keys** — reuse [../agent-langgraph/.env](../agent-langgraph/.env) (`ANTHROPIC_API_KEY`, `HF_TOKEN`). Optional overrides in `sdl-agents/.env` (see `.env.example`).
+2. **Configuration** — copy `.env.example` to `.env` and set `ANTHROPIC_API_KEY`, optional `HF_TOKEN`, and integration URLs.
 
 3. **Monitoring database**:
 
@@ -66,10 +66,20 @@ Hierarchy is defined in [../agents.md](../agents.md). Architectural reference: [
 
 ## Run CLI
 
+**Lab orchestrator** (monitoring DB, safety, literature, procedures):
+
 ```bash
 python scripts/run_cli.py "Which devices are offline?"
 python scripts/run_cli.py "What PPE is required for BSL-2 work?"
 ```
+
+**Knowledge RAG** (web `SEED_URLS` + `LOCAL_DOCS_DIR`; separate from lab router):
+
+```bash
+python scripts/run_knowledge_cli.py "Your question about indexed docs"
+```
+
+Supported local types: `.md`, `.txt`, `.csv`, `.json`, `.pdf`, `.docx` (via LlamaIndex readers; no unstructured).
 
 ## Tests
 
@@ -90,5 +100,17 @@ pytest -m integration -v   # requires live Hermes/OpenClaw + SDL_INTEGRATION_MOD
 | Academic literature | Nous Hermes | `sdl_agents/agents/research/academic_hermes.py` |
 | Safety protocols | Hermes + LlamaIndex | `sdl_agents/agents/research/safety_hermes_rag.py` |
 | Experimental procedures | OpenClaw + LlamaIndex | `sdl_agents/agents/research/experimental_openclaw_rag.py` |
+| Knowledge RAG | LangGraph + HF embeddings | `sdl_agents/agents/knowledge/` |
 
 Default integration mode is **mock** (`SDL_INTEGRATION_MODE=mock`) so tests and CLI work without Hermes/OpenClaw.
+
+### Caveman mode
+
+User-facing replies use [caveman](https://github.com/juliusbrussee/caveman) terse style via `sdl_agents/caveman.py` (on by default):
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `CAVEMAN_ENABLED` | `1` | Set `0` to disable |
+| `CAVEMAN_LEVEL` | `full` | `lite`, `full`, `ultra`, `wenyan-lite`, `wenyan-full`, `wenyan-ultra` |
+
+Router, research decompose, and quality-gate calls stay normal for structured JSON.

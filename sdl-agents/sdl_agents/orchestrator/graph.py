@@ -11,6 +11,7 @@ from langgraph.graph import END, StateGraph
 
 from sdl_agents.agents.database.graph import build_database_graph
 from sdl_agents.agents.research.graph import build_research_graph
+from sdl_agents.caveman import merge_system
 from sdl_agents.config import ANTHROPIC_CHAT_MODEL
 from sdl_agents.orchestrator.router import classify_intent_text
 from sdl_agents.state import SDLAgentState
@@ -72,7 +73,7 @@ def general_chat(state: SDLAgentState) -> dict[str, Any]:
     response = model.invoke(
         [
             SystemMessage(
-                content=(
+                content=merge_system(
                     "You are the SDL lab assistant orchestrator. "
                     "You route database, safety, literature, and procedure questions. "
                     "Briefly explain what you can help with."

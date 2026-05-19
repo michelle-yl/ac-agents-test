@@ -6,10 +6,16 @@ from typing import Any
 
 import httpx
 
+from sdl_agents.caveman import instruction_suffix
 from sdl_agents.config import OPENCLAW_BASE_URL, is_live_integration
 from sdl_agents.logging_utils import get_logger
 
 logger = get_logger("openclaw")
+
+
+def _procedure_message(query: str, context: str) -> str:
+    body = f"{query}\n\nContext:\n{context}" if context.strip() else query
+    return body + instruction_suffix()
 
 
 async def query_procedures(query: str, context: str = "") -> dict[str, Any]:
@@ -29,7 +35,7 @@ async def query_procedures(query: str, context: str = "") -> dict[str, Any]:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
                 f"{OPENCLAW_BASE_URL}/api/chat",
-                json={"message": f"{query}\n\nContext:\n{context}"},
+                json={"message": _procedure_message(query, context)},
             )
             response.raise_for_status()
             data = response.json()

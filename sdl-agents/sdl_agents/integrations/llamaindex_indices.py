@@ -11,6 +11,7 @@ from sdl_agents.config import (
     PROCEDURES_DOCS_DIR,
     SAFETY_DOCS_DIR,
 )
+from sdl_agents.integrations.documents import load_directory
 from sdl_agents.logging_utils import get_logger
 
 logger = get_logger("llamaindex")
@@ -19,23 +20,7 @@ _index_cache: dict[str, Any] = {}
 
 
 def _load_documents(directory: Path) -> list[Any]:
-    from llama_index.core import Document
-
-    docs: list[Document] = []
-    if not directory.is_dir():
-        return docs
-    for path in directory.rglob("*"):
-        if path.suffix.lower() in {".md", ".txt", ".csv"}:
-            try:
-                docs.append(
-                    Document(
-                        text=path.read_text(encoding="utf-8", errors="replace"),
-                        metadata={"file": str(path.name), "path": str(path)},
-                    )
-                )
-            except OSError as exc:
-                logger.warning("Skip %s: %s", path, exc)
-    return docs
+    return load_directory(directory)
 
 
 def get_index(name: str, docs_dir: Path):

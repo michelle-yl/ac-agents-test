@@ -10,6 +10,7 @@ from typing import Any
 
 import httpx
 
+from sdl_agents.caveman import merge_system
 from sdl_agents.config import (
     HERMES_API_KEY,
     HERMES_BASE_URL,
@@ -71,7 +72,7 @@ def _chat_completions_url() -> str:
 
 
 def _build_messages(prompt: str, context: str, task_type: str) -> list[dict[str, str]]:
-    system = _SYSTEM_BY_TASK.get(task_type, _SYSTEM_BY_TASK["general"])
+    system = merge_system(_SYSTEM_BY_TASK.get(task_type, _SYSTEM_BY_TASK["general"]))
     messages: list[dict[str, str]] = [{"role": "system", "content": system}]
     user_content = prompt.strip()
     if context.strip():

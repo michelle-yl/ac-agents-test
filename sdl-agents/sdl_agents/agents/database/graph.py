@@ -12,6 +12,7 @@ from langgraph.prebuilt import ToolNode, tools_condition
 
 from sdl_agents.agents.database.prompts import DB_AGENT_SYSTEM
 from sdl_agents.agents.database.tools import DATABASE_TOOLS
+from sdl_agents.caveman import with_caveman
 from sdl_agents.config import ANTHROPIC_CHAT_MODEL
 from sdl_agents.state import SDLAgentState
 
@@ -49,7 +50,7 @@ def summarize_db(state: SDLAgentState) -> dict[str, Any]:
         f"Question: {question}\n\nTool results:\n{context}\n\n"
         "Write a concise answer for the user. Mention key device/service/sensor names."
     )
-    answer = _model().invoke([HumanMessage(content=prompt)])
+    answer = _model().invoke(with_caveman([HumanMessage(content=prompt)]))
     preview: list[dict[str, Any]] = []
     row_count = 0
     for m in tool_msgs:
