@@ -1,0 +1,17 @@
+[project]
+name = "sdl-agents"
+version = "0.1.0"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = [
+    "stage1: foundation tests",
+    "stage2: monitoring database tests",
+    "stage3: database agent graph tests",
+    "stage4: specialist and orchestrator tests",
+    "stage6: end-to-end tests",
+    "integration: requires live Hermes/OpenClaw/DB",
+    "slow: slow tests",
+]
+testpaths = ["tests"]
