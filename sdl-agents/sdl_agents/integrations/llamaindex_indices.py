@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from sdl_agents.config import (
+    ACADEMIC_DOCS_DIR,
     HF_EMBEDDING_MODEL,
     INDICES_DIR,
     PROCEDURES_DOCS_DIR,
@@ -69,6 +70,10 @@ def retrieve(name: str, docs_dir: Path, query: str, top_k: int = 3) -> list[dict
 
 def search_safety(query: str, top_k: int = 3) -> list[dict[str, Any]]:
     return retrieve("safety", SAFETY_DOCS_DIR, query, top_k)
+
+
+def search_academic(query: str, top_k: int = 3) -> list[dict[str, Any]]:
+    return retrieve("academic", ACADEMIC_DOCS_DIR, query, top_k)
 
 
 def search_procedures(query: str, top_k: int = 3) -> list[dict[str, Any]]:

@@ -1,3 +1,5 @@
-from sdl_agents.agents.research.graph import build_research_graph
+"""Research-route Hermes specialists and subagent router."""
 
-__all__ = ["build_research_graph"]
+from sdl_agents.agents.research.research_route_router import classify_research_subagent_text
+
+__all__ = ["classify_research_subagent_text"]

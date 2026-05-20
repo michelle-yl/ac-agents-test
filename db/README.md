@@ -53,6 +53,34 @@ Without `--truncate`, each run appends new snapshot rows (history).
 
 DDL: `schema/001_monitoring.sql` (applied on first `docker compose up`).
 
+### Migration: monitoring events (002)
+
+The SDL monitoring watcher writes to `monitoring_events`. On an **existing** volume (already ran `docker compose up` before this table existed), apply manually:
+
+```powershell
+# PowerShell (recommended on Windows)
+.\scripts\apply-002-events.ps1
+```
+
+```bash
+# Bash
+./scripts/apply-002-events.sh
+```
+
+Or inline:
+
+```powershell
+Get-Content schema\002_monitoring_events.sql | docker compose exec -T postgres psql -U angie -d angie_monitoring_replica
+```
+
+Or from the host with `psql` and `DATABASE_URL`:
+
+```bash
+psql "$DATABASE_URL" -f schema/002_monitoring_events.sql
+```
+
+New volumes: add `002_monitoring_events.sql` to `docker-compose.yml` `docker-entrypoint-initdb.d` or run the command above once after first boot.
+
 ## Verify
 
 ```sql

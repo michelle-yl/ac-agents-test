@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated, Any, Literal
+from typing import Any, Literal
 
 from langgraph.graph import MessagesState
 from typing_extensions import TypedDict
@@ -27,6 +27,7 @@ class SDLAgentState(MessagesState):
     intent: Intent
     route_reason: str
     db_payload: dict[str, Any] | None
+    monitor_cache_used: bool
     research_flags: ResearchFlags
     research_payload: ResearchPayload | None
     errors: list[str]

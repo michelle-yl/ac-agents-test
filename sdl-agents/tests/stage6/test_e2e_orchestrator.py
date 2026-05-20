@@ -15,6 +15,7 @@ def _initial_state(query: str) -> dict:
         "intent": "general",
         "route_reason": "",
         "db_payload": None,
+        "monitor_cache_used": False,
         "research_payload": None,
         "research_flags": {},
         "errors": [],
@@ -41,6 +42,30 @@ def test_e2e_database():
     graph = build_orchestrator_graph()
     result = graph.invoke(_initial_state("Which devices are offline?"))
     assert result.get("db_payload") or "device" in result["messages"][-1].content.lower()
+
+
+@pytest.mark.stage6
+@pytest.mark.skipif(not postgres_available(), reason="PostgreSQL not available")
+def test_e2e_database_fast_path_no_llm():
+    from datetime import datetime, timezone
+
+    from sdl_agents.monitoring.cache import set_state
+    from sdl_agents.monitoring.state import MonitorState
+
+    set_state(
+        MonitorState(
+            loaded_at=datetime.now(timezone.utc),
+            devices=[{"ip": "10.0.0.9", "name": "down-box", "online": False}],
+            sensors=[],
+            services=[],
+            summary="1 offline device",
+        )
+    )
+    graph = build_orchestrator_graph()
+    result = graph.invoke(_initial_state("Which devices are offline?"))
+    db = result.get("db_payload") or {}
+    assert db.get("llm_used") is False
+    assert result.get("monitor_cache_used") is True
 
 
 @pytest.mark.stage6

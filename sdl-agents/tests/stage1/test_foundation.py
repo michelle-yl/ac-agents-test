@@ -33,6 +33,7 @@ def test_state_typing():
         "intent": "general",
         "route_reason": "",
         "db_payload": None,
+        "monitor_cache_used": False,
         "research_payload": None,
         "research_flags": {},
         "errors": [],

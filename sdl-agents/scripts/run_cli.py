@@ -16,6 +16,8 @@ from sdl_agents.orchestrator.graph import build_orchestrator_graph
 
 
 def main() -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("query", nargs="?", help="User question")
     args = parser.parse_args()
@@ -32,6 +34,7 @@ def main() -> int:
             "intent": "general",
             "route_reason": "",
             "db_payload": None,
+            "monitor_cache_used": False,
             "research_payload": None,
             "research_flags": {},
             "errors": [],

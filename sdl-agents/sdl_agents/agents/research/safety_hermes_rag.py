@@ -6,14 +6,66 @@ import asyncio
 import json
 from typing import Any
 
+import httpx
+
 from sdl_agents.integrations.hermes_client import run_task
 from sdl_agents.integrations.llamaindex_indices import search_safety
+
+def _hermes_degraded(exc: BaseException) -> bool:
+    if isinstance(exc, httpx.TimeoutException):
+        return True
+    err = str(exc).lower()
+    return any(
+        token in err
+        for token in ("connect", "unavailable", "timeout", "timed out")
+    )
+
 
 SAFETY_PROMPT = """You are a laboratory safety specialist.
 Use the retrieved documentation to answer about biosafety, MSDS, PPE, and OSHA requirements.
 Respond with clear decision guidance. Include risk_level (low|medium|high|critical)
 and decision (approved|needs_review|blocked) when assessing an operation.
 """
+
+
+def _rag_only_safety_response(
+    query: str, chunks: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Answer from local safety corpus when Hermes gateway is unreachable."""
+    if not chunks:
+        text = (
+            "Hermes gateway unavailable and no local safety documents matched. "
+            "Start `hermes gateway` (port 8642) or build safety indices "
+            "(python scripts/build_indices.py)."
+        )
+        decision = "needs_review"
+        risk_level = "medium"
+    else:
+        excerpts = "\n\n".join(
+            f"- {c.get('text', '')[:500]}" for c in chunks[:3] if c.get("text")
+        )
+        text = (
+            "From local safety documents (Hermes synthesis unavailable):\n\n"
+            f"{excerpts}\n\n"
+            "decision=needs_review; risk_level=medium"
+        )
+        decision = "needs_review"
+        risk_level = "medium"
+        if "blocked" in text.lower():
+            decision = "blocked"
+
+    return {
+        "text": text,
+        "sources": [
+            {"file": c.get("metadata", {}).get("file"), "chunk": c.get("text", "")[:200]}
+            for c in chunks
+        ],
+        "citations": chunks,
+        "decision": decision,
+        "risk_level": risk_level,
+        "concerns": ["hermes_unavailable"],
+        "specialist": "safety",
+    }
 
 
 async def run_safety(query: str, db_context: str = "") -> dict[str, Any]:
@@ -23,12 +75,18 @@ async def run_safety(query: str, db_context: str = "") -> dict[str, Any]:
         context = f"{context}\n\nMonitoring:\n{db_context}"
 
     prompt = f"{SAFETY_PROMPT}\n\nQuestion: {query}"
-    result = await run_task(prompt, context=context, task_type="safety")
+    try:
+        result = await run_task(prompt, context=context, task_type="safety")
+    except (RuntimeError, httpx.ConnectError, httpx.HTTPError, httpx.TimeoutException) as exc:
+        if _hermes_degraded(exc):
+            return _rag_only_safety_response(query, chunks)
+        raise
 
     parsed = _parse_safety_fields(result["text"])
     return {
         "text": result["text"],
-        "sources": result.get("sources", []) + [
+        "sources": result.get("sources", [])
+        + [
             {"file": c.get("metadata", {}).get("file"), "chunk": c.get("text", "")[:200]}
             for c in chunks
         ],

@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 import os
+import re
+import subprocess
+import sys
 from pathlib import Path
+from urllib.parse import urlparse
 
 from dotenv import load_dotenv
 
@@ -99,9 +103,18 @@ HERMES_BASE_URL = normalize_hermes_openai_base(
 )
 HERMES_API_KEY = os.environ.get("HERMES_API_KEY", "")
 HERMES_MODEL = os.environ.get("HERMES_MODEL", "hermes-agent")
+HERMES_CONNECT_TIMEOUT = float(os.environ.get("HERMES_CONNECT_TIMEOUT", "10"))
+HERMES_READ_TIMEOUT = float(os.environ.get("HERMES_READ_TIMEOUT", "180"))
 OPENCLAW_BASE_URL = os.environ.get("OPENCLAW_BASE_URL", "http://localhost:18789").rstrip(
     "/"
 )
+OPENCLAW_GATEWAY_TOKEN = (
+    os.environ.get("OPENCLAW_GATEWAY_TOKEN", "").strip()
+    or os.environ.get("OPENCLAW_API_KEY", "").strip()
+)
+OPENCLAW_MODEL = os.environ.get("OPENCLAW_MODEL", "openclaw/default")
+OPENCLAW_WSL_DISTRO = os.environ.get("OPENCLAW_WSL_DISTRO", "Ubuntu").strip()
+
 SAFETY_DOCS_DIR = Path(
     os.environ.get("SAFETY_DOCS_DIR", str(SDL_AGENTS_ROOT / "corpus" / "safety"))
 )
@@ -110,9 +123,106 @@ PROCEDURES_DOCS_DIR = Path(
         "PROCEDURES_DOCS_DIR", str(SDL_AGENTS_ROOT / "corpus" / "procedures")
     )
 )
-RESEARCH_DOCS_DIR = Path(
-    os.environ.get("RESEARCH_DOCS_DIR", str(SDL_AGENTS_ROOT / "corpus" / "research"))
+_default_academic = str(SDL_AGENTS_ROOT / "corpus" / "academic")
+ACADEMIC_DOCS_DIR = Path(
+    os.environ.get("ACADEMIC_DOCS_DIR", os.environ.get("RESEARCH_DOCS_DIR", _default_academic))
 )
+# Backward-compatible alias (prefer ACADEMIC_DOCS_DIR in new config)
+RESEARCH_DOCS_DIR = ACADEMIC_DOCS_DIR
 INDICES_DIR = SDL_AGENTS_ROOT / "indices"
 MAX_RESULT_ROWS = int(os.environ.get("DB_AGENT_MAX_ROWS", "500"))
 DB_TIMEOUT_SECONDS = float(os.environ.get("DB_AGENT_TIMEOUT", "5"))
+
+DB_DIR = REPO_ROOT / "db"
+DEFAULT_MONITOR_JSON_DIR = DB_DIR / "seed" / "data" / "monitoring"
+
+
+def _env_truthy(name: str, default: str = "1") -> bool:
+    return os.environ.get(name, default).strip().lower() not in (
+        "0",
+        "false",
+        "no",
+        "off",
+    )
+
+
+OPENCLAW_WSL_AUTO = _env_truthy("OPENCLAW_WSL_AUTO", "1")
+HERMES_WSL_AUTO = _env_truthy("HERMES_WSL_AUTO", "1")
+WSL_DISTRO = os.environ.get("WSL_DISTRO", os.environ.get("OPENCLAW_WSL_DISTRO", "Ubuntu")).strip()
+
+
+def discover_wsl_ipv4(distro: str | None = None) -> str | None:
+    """Best-effort WSL2 eth0 IPv4 (Windows host → WSL services)."""
+    if sys.platform != "win32":
+        return None
+    name = (distro or WSL_DISTRO).strip()
+    if not name:
+        return None
+    try:
+        proc = subprocess.run(
+            ["wsl", "-d", name, "--", "ip", "-4", "-o", "addr", "show", "eth0"],
+            capture_output=True,
+            text=True,
+            timeout=8,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if proc.returncode != 0:
+        return None
+    match = re.search(r"\binet\s+(\d+\.\d+\.\d+\.\d+)/", proc.stdout)
+    return match.group(1) if match else None
+
+
+def _localhost_wsl_fallback_urls(
+    primary: str,
+    *,
+    default_port: int,
+    wsl_auto: bool,
+) -> list[str]:
+    """Append WSL eth0 host URL when primary uses localhost on Windows."""
+    urls = [primary.rstrip("/")]
+    if not wsl_auto or sys.platform != "win32":
+        return urls
+    parsed = urlparse(urls[0])
+    if parsed.hostname not in ("127.0.0.1", "localhost"):
+        return urls
+    wsl_ip = discover_wsl_ipv4()
+    if not wsl_ip:
+        return urls
+    port = parsed.port or default_port
+    fallback = f"http://{wsl_ip}:{port}"
+    if fallback not in urls:
+        urls.append(fallback)
+    return urls
+
+
+def openclaw_base_urls() -> list[str]:
+    """Primary OpenClaw base URL plus WSL fallback when localhost fails on Windows."""
+    return _localhost_wsl_fallback_urls(
+        OPENCLAW_BASE_URL, default_port=18789, wsl_auto=OPENCLAW_WSL_AUTO
+    )
+
+
+def hermes_openai_base_urls() -> list[str]:
+    """Hermes OpenAI API roots (…/v1) with optional WSL fallback on Windows."""
+    origin = hermes_http_origin(HERMES_BASE_URL)
+    bases = _localhost_wsl_fallback_urls(origin, default_port=8642, wsl_auto=HERMES_WSL_AUTO)
+    return [normalize_hermes_openai_base(b) for b in bases]
+
+
+def monitor_json_dir() -> Path:
+    raw = os.environ.get("MONITOR_JSON_DIR", "").strip()
+    if raw:
+        return Path(raw).expanduser().resolve()
+    return DEFAULT_MONITOR_JSON_DIR.resolve()
+
+
+MONITOR_INGEST_INTERVAL_SEC = int(os.environ.get("MONITOR_INGEST_INTERVAL_SEC", "120"))
+MONITOR_POLL_INTERVAL_SEC = int(os.environ.get("MONITOR_POLL_INTERVAL_SEC", "60"))
+MONITOR_CACHE_MAX_AGE_SEC = int(os.environ.get("MONITOR_CACHE_MAX_AGE_SEC", "120"))
+
+DB_FAST_PATH_ENABLED = _env_truthy("DB_FAST_PATH_ENABLED", "1")
+ROUTER_KEYWORD_FIRST = _env_truthy("ROUTER_KEYWORD_FIRST", "1")
+DB_AGENT_MODEL = os.environ.get("DB_AGENT_MODEL", ANTHROPIC_GRADER_MODEL)
+DB_FAST_PATH_MAX_ROWS = int(os.environ.get("DB_FAST_PATH_MAX_ROWS", "100"))
