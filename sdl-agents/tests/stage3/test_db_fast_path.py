@@ -30,6 +30,7 @@ def test_fast_path_offline_devices():
     assert payload is not None
     assert payload["llm_used"] is False
     assert payload["source"] == "database_fast_path"
+    assert payload["sources"][0]["source_type"] == "internal"
     assert "dev-a" in payload["answer"]
     assert payload["row_count"] == 1
 

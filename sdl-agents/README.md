@@ -67,37 +67,7 @@ Hierarchy is defined in [../agents.md](../agents.md). Architectural reference: [
      -d "{\"model\": \"hermes-agent\", \"messages\": [{\"role\": \"user\", \"content\": \"Hello!\"}], \"stream\": false}"
    ```
 
-If Hermes is not running, safety and academic queries still return excerpts from local corpora (`corpus/safety/`, `corpus/academic/` + `python scripts/build_indices.py`). Live Hermes improves synthesis when the gateway is up.
-
-### OpenClaw gateway (optional, not used by default)
-
-Research **experimental procedures** use Hermes like academic and safety agents. OpenClaw remains available in `sdl_agents/integrations/openclaw_client.py` for separate deployments. See [OpenClaw HTTP API](https://docs.openclaw.ai/gateway/openai-http-api) if you wire it manually.
-
-1. In `openclaw.json`, enable chat completions and set auth:
-
-   ```json5
-   {
-     gateway: {
-       auth: { mode: "token", token: "YOUR_TOKEN" },
-       http: { endpoints: { chatCompletions: { enabled: true } } },
-     },
-   }
-   ```
-
-2. In `sdl-agents/.env`: `OPENCLAW_BASE_URL=http://127.0.0.1:18789`, `OPENCLAW_GATEWAY_TOKEN=<same token>`, `OPENCLAW_MODEL=openclaw/default`.
-
-3. **Windows + WSL Docker:** if `127.0.0.1:18789` is unreachable from PowerShell but the gateway is healthy inside WSL, leave `OPENCLAW_WSL_AUTO=1` (default). SDL retries via the WSL eth0 IP. Or set `OPENCLAW_BASE_URL` to that IP explicitly.
-
-4. Smoke test (replace token):
-
-   ```bash
-   curl -sS http://127.0.0.1:18789/v1/chat/completions \
-     -H "Authorization: Bearer YOUR_TOKEN" \
-     -H "Content-Type: application/json" \
-     -d '{"model":"openclaw/default","messages":[{"role":"user","content":"hi"}]}'
-   ```
-
-   A `404` here means `chatCompletions` is still disabled — fix config and restart the gateway container.
+If Hermes is not running, research queries still return excerpts from local corpora (`corpus/safety/`, `corpus/procedures/`, `corpus/academic/` + `python scripts/build_indices.py`). Live Hermes improves synthesis when the gateway is up.
 
 ## Run CLI
 

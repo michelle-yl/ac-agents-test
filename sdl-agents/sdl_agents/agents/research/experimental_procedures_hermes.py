@@ -9,15 +9,25 @@ from typing import Any
 
 import httpx
 
+from sdl_agents.agents.research.external_fallback import (
+    external_fallback_response,
+    internal_context_sufficient,
+)
 from sdl_agents.config import HERMES_READ_TIMEOUT
 from sdl_agents.integrations.hermes_client import run_task
 from sdl_agents.integrations.llamaindex_indices import search_procedures
+from sdl_agents.sources import local_chunk_source, normalize_source
 
 PROCEDURES_READ_TIMEOUT = min(HERMES_READ_TIMEOUT, 90.0)
 
-PROCEDURES_PROMPT = """You are an experimental laboratory procedures specialist.
-Use the retrieved SOPs and procedure documents to answer about pipetting, dilutions,
-plate layouts, liquid handling, and volume calculations. Include clear step-by-step guidance.
+PROCEDURES_PROMPT = """You are an experimental laboratory procedures and equipment specialist.
+Use retrieved SOPs, equipment manuals, and procedure documents to answer about:
+- equipment usage in self-driving labs, including robotic arms, pipettes, liquid handlers,
+  plate readers, centrifuges, incubators, and other automation hardware;
+- interpreting equipment manuals, operating steps, setup, calibration, maintenance, and troubleshooting;
+- pipetting, dilutions, plate layouts, liquid handling, and volume calculations.
+Ground answers in the retrieved documents when available. Include clear step-by-step guidance
+and call out when the manual or SOP should be checked before operating equipment.
 """
 
 
@@ -60,8 +70,9 @@ def _rag_only_procedures_response(
     parts: list[str] = []
     if not chunks:
         parts.append(
-            "Hermes gateway unavailable and no local procedure documents matched. "
-            "Add SOPs under corpus/procedures/ and run python scripts/build_indices.py."
+            "Hermes gateway unavailable and no local procedure or equipment manual documents matched. "
+            "Add SOPs or equipment manuals under corpus/procedures/ and run "
+            "python scripts/build_indices.py."
         )
     else:
         excerpts = "\n\n".join(
@@ -75,10 +86,7 @@ def _rag_only_procedures_response(
         parts.append(f"Dilution (C1V1=C2V2): {json.dumps(dilution)}")
     return {
         "text": "\n\n".join(parts),
-        "sources": [
-            {"file": c.get("metadata", {}).get("file"), "chunk": c.get("text", "")[:200]}
-            for c in chunks
-        ],
+        "sources": [local_chunk_source(c) for c in chunks],
         "citations": chunks,
         "dilution": dilution,
         "concerns": ["hermes_unavailable"],
@@ -88,8 +96,15 @@ def _rag_only_procedures_response(
 
 async def run_procedures(query: str, db_context: str = "") -> dict[str, Any]:
     chunks = search_procedures(query, top_k=3)
-    context = json.dumps(chunks, indent=2) if chunks else "No local procedure documents indexed."
     dilution = _extract_dilution_from_query(query)
+    if not internal_context_sufficient(query, chunks):
+        return await external_fallback_response(
+            query,
+            specialist="procedures",
+            extra={"dilution": dilution},
+        )
+
+    context = json.dumps(chunks, indent=2) if chunks else "No local procedure documents indexed."
     if dilution:
         context += f"\n\nDilution calculation (C1V1=C2V2): {json.dumps(dilution)}"
     if db_context:
@@ -110,11 +125,9 @@ async def run_procedures(query: str, db_context: str = "") -> dict[str, Any]:
 
     return {
         "text": result["text"],
-        "sources": result.get("sources", [])
-        + [
-            {"file": c.get("metadata", {}).get("file"), "chunk": c.get("text", "")[:200]}
-            for c in chunks
-        ],
+        "sources": [
+            normalize_source(s) for s in result.get("sources", [])
+        ] + [local_chunk_source(c) for c in chunks],
         "citations": chunks,
         "dilution": dilution,
         "specialist": "procedures",

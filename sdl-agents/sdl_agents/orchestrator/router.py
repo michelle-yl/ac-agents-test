@@ -19,10 +19,11 @@ Available routes (match agents.md):
    service up/down, latest snapshots. Examples: "Which devices are down?",
    "Is the incubator service up?"
 
-2. **research** (research route) — Academic literature & safety protocols (papers, MSDS, PPE, OSHA)
-   OR experimental procedures (pipetting, dilutions, volume calculations, plate layouts).
+2. **research** (research route) — Academic literature, safety protocols (papers, MSDS,
+   PPE, OSHA), or experimental procedures and equipment usage (robotic arms, liquid
+   handlers, pipetting, dilutions, plate layouts, equipment manuals).
    Examples: "BSL-2 PPE for formaldehyde", "Steps for a serial dilution",
-   "Recent papers on organoids"
+   "How do I interpret this liquid handler manual?", "Recent papers on organoids"
 
 3. **hybrid** — Needs BOTH database route (live monitoring) AND research route.
    Example: "Is the incubator service up and what are BSL-2 PPE requirements?"
@@ -66,9 +67,16 @@ RESEARCH_KEYWORDS = (
     "paper",
     "literature",
     "dilution",
+    "equipment",
+    "instrument",
+    "liquid handler",
+    "manual",
     "pipet",
     "pipette",
     "protocol",
+    "robot",
+    "robotic",
+    "robotic arm",
     "sop",
     "osha",
     "formaldehyde",

@@ -14,7 +14,9 @@ RESEARCH_ROUTE_SYSTEM_PROMPT = """You are the research-route subagent router for
 The research route has exactly three Hermes-backed subagents:
 1. **academic** — Academic literature (papers, journals, DOI, PubMed, reviews, studies)
 2. **safety** — Safety protocols (biosafety, MSDS, PPE, OSHA, BSL, chemical hazards)
-3. **procedures** — Experimental procedures and equipment usage (pipetting, dilutions, plate layouts, SOP steps, robotic arm handling, operation of lab equipment)
+3. **procedures** — Experimental procedures, equipment usage, and equipment manual
+   interpretation (pipetting, dilutions, plate layouts, SOP steps, robotic arm handling,
+   liquid handlers, automation hardware, setup, calibration, maintenance, troubleshooting)
 
 Set needs_academic, needs_safety, and/or needs_procedures only when clearly required.
 Enable multiple flags when the question spans those domains.
@@ -56,12 +58,26 @@ SAFETY_KEYWORDS = (
 )
 
 PROCEDURES_KEYWORDS = (
+    "automation",
+    "calibration",
+    "centrifuge",
     "dilution",
+    "equipment",
+    "instrument",
+    "labware",
+    "liquid handler",
     "manual",
+    "maintenance",
+    "operate",
+    "operation",
     "pipet",
     "pipette",
     "plate",
+    "plate reader",
     "volume",
+    "robot",
+    "robotic",
+    "robotic arm",
     "sop",
     "protocol",
     "liquid",
@@ -70,6 +86,8 @@ PROCEDURES_KEYWORDS = (
     "96-well",
     "well plate",
     "c1v1",
+    "troubleshoot",
+    "troubleshooting",
     "transfer",
     "mix",
 )

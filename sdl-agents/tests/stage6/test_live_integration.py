@@ -1,4 +1,4 @@
-"""Live integration tests (Hermes, OpenClaw) — run with SDL_INTEGRATION_MODE=live."""
+"""Live integration tests (Hermes) — run with SDL_INTEGRATION_MODE=live."""
 
 from __future__ import annotations
 
@@ -21,13 +21,3 @@ async def test_hermes_live_health():
     result = await run_task("Reply with exactly: pong", task_type="academic")
     assert result.get("text")
 
-
-@pytest.mark.integration
-@pytest.mark.skipif(not is_live_integration(), reason="SDL_INTEGRATION_MODE!=live")
-@pytest.mark.asyncio
-async def test_openclaw_live_health():
-    from sdl_agents.integrations.openclaw_client import health_check
-
-    ok = await health_check()
-    if not ok:
-        pytest.skip("OpenClaw gateway not reachable")

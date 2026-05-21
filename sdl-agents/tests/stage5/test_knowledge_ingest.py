@@ -51,3 +51,16 @@ def test_build_corpus_local_only(tmp_path: Path, monkeypatch):
 
     docs = build_startup_corpus()
     assert any("local corpus" in d.page_content for d in docs)
+
+
+def test_knowledge_context_sources_are_parsed():
+    from sdl_agents.agents.knowledge.graph import _sources_from_context
+
+    context = "Source: https://example.com/doc\nSource type: web\nContent:\nhello"
+    sources = _sources_from_context(context)
+    assert sources == [
+        {
+            "label": "https://example.com/doc",
+            "source_type": "web",
+        }
+    ]

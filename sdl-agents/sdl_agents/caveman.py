@@ -90,7 +90,7 @@ def merge_system(base: str) -> str:
 
 
 def instruction_suffix() -> str:
-    """Plain-text suffix for non-chat APIs (Hermes user prompt, OpenClaw message)."""
+    """Plain-text suffix for non-chat APIs such as Hermes user prompts."""
     block = intensity_block()
     if not block:
         return ""

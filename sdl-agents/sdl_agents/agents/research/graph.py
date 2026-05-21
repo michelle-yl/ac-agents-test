@@ -11,7 +11,7 @@ from langgraph.graph import END, StateGraph
 from pydantic import BaseModel, Field
 
 from sdl_agents.agents.research.academic_hermes import run_academic_sync
-from sdl_agents.agents.research.experimental_openclaw_rag import run_experimental_sync
+from sdl_agents.agents.research.experimental_procedures_hermes import run_procedures_sync
 from sdl_agents.agents.research.safety_hermes_rag import run_safety_sync
 from sdl_agents.config import ANTHROPIC_GRADER_MODEL
 from sdl_agents.state import ResearchFlags, ResearchPayload, SDLAgentState
@@ -28,7 +28,9 @@ DECOMPOSE_PROMPT = """Analyze the user question for a lab research assistant.
 Set flags for which specialists are needed:
 - needs_academic: papers, literature, hypotheses, research methodology
 - needs_safety: biosafety, MSDS, PPE, OSHA, chemical hazards, BSL
-- needs_procedures: pipetting, dilutions, plate layouts, liquid handling, SOP steps
+- needs_procedures: pipetting, dilutions, plate layouts, liquid handling, SOP steps,
+  equipment usage, robotic arms, liquid handlers, equipment manuals, calibration,
+  maintenance, troubleshooting
 Only enable flags that are clearly required.
 """
 
@@ -63,7 +65,24 @@ def _keyword_decompose(question: str) -> ResearchFlags:
         "needs_academic": any(k in q for k in ("paper", "literature", "research", "hypothesis")),
         "needs_safety": any(k in q for k in ("bsl", "msds", "ppe", "safety", "osha", "hazard")),
         "needs_procedures": any(
-            k in q for k in ("dilution", "pipet", "plate", "volume", "sop", "protocol", "liquid")
+            k in q
+            for k in (
+                "dilution",
+                "pipet",
+                "plate",
+                "volume",
+                "sop",
+                "protocol",
+                "liquid",
+                "manual",
+                "equipment",
+                "robot",
+                "robotic arm",
+                "liquid handler",
+                "calibration",
+                "maintenance",
+                "troubleshoot",
+            )
         ),
     }
 
@@ -102,7 +121,7 @@ def dispatch_specialists(state: SDLAgentState) -> dict[str, Any]:
 
     if flags.get("needs_procedures"):
         try:
-            proc = run_experimental_sync(question, ctx)
+            proc = run_procedures_sync(question, ctx)
             payload["procedures"] = proc
             if proc.get("errors"):
                 errors.extend(proc["errors"])

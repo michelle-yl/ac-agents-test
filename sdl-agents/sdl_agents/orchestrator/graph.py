@@ -24,6 +24,7 @@ from sdl_agents.config import ANTHROPIC_CHAT_MODEL
 from sdl_agents.monitoring.cache import get_state, is_cache_fresh
 from sdl_agents.monitoring.cache_answer import answer_from_cache
 from sdl_agents.orchestrator.router import classify_intent_text
+from sdl_agents.sources import append_sources_section, external_source, internal_source
 from sdl_agents.state import ResearchPayload, SDLAgentState
 
 _database_graph = None
@@ -59,6 +60,12 @@ def monitor_snapshot_answer(state: SDLAgentState) -> dict[str, Any]:
     payload = answer_from_cache(question, cached)
     if payload is None:
         return {}
+    payload = {
+        **payload,
+        "sources": [
+            internal_source("monitoring watcher cache", prefix="Monitoring cache")
+        ],
+    }
     return {
         "db_payload": payload,
         "monitor_cache_used": True,
@@ -148,17 +155,18 @@ def general_chat(state: SDLAgentState) -> dict[str, Any]:
 def finalize(state: SDLAgentState) -> dict[str, Any]:
     question = state["messages"][0].content if state["messages"] else ""
     sections: list[str] = []
+    sources: list[dict[str, Any]] = []
 
     if state.get("db_payload"):
         db = state["db_payload"]
         sections.append("## Monitoring database\n" + db.get("answer", json.dumps(db, default=str)))
+        sources.extend(db.get("sources") or [])
 
     rp = state.get("research_payload") or {}
     academic = rp.get("academic") or {}
     if academic.get("text"):
         sections.append("## Academic literature\n" + academic.get("text", ""))
-        if academic.get("sources"):
-            sections.append("Sources: " + json.dumps(academic["sources"], default=str))
+        sources.extend(academic.get("sources") or [])
 
     safety = rp.get("safety") or {}
     if safety.get("text"):
@@ -166,10 +174,12 @@ def finalize(state: SDLAgentState) -> dict[str, Any]:
             f"## Safety protocols\n{safety.get('text', '')}\n"
             f"(decision={safety.get('decision')}, risk_level={safety.get('risk_level')})"
         )
+        sources.extend(safety.get("sources") or [])
 
     procedures = rp.get("procedures") or {}
     if procedures.get("text"):
         sections.append("## Experimental procedures\n" + procedures.get("text", ""))
+        sources.extend(procedures.get("sources") or [])
 
     if rp.get("gaps"):
         sections.append("## Gaps\n" + "; ".join(rp["gaps"]))
@@ -183,6 +193,17 @@ def finalize(state: SDLAgentState) -> dict[str, Any]:
     else:
         body = f"Answer for: {question}\n\n" + "\n\n".join(sections)
 
+    if not sources:
+        if state.get("db_payload"):
+            sources.append(internal_source("Monitoring PostgreSQL/cache", prefix="Monitoring"))
+        else:
+            sources.append(
+                external_source(
+                    "LLM synthesis only; no retrieved documents were cited.",
+                    prefix="LLM synthesis",
+                )
+            )
+    body = append_sources_section(body, sources)
     return {"messages": [AIMessage(content=body)]}
 
 

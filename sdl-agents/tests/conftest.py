@@ -18,7 +18,7 @@ os.environ["SDL_TEST_USE_MOCK_INTEGRATION"] = "1"
 
 @pytest.fixture(autouse=True)
 def _sdl_integration_mode(request):
-    """Non-integration tests always use mock Hermes/OpenClaw; integration uses live."""
+    """Non-integration tests always use mock Hermes; integration uses live."""
     if request.node.get_closest_marker("integration"):
         os.environ.pop("SDL_TEST_USE_MOCK_INTEGRATION", None)
         os.environ["SDL_INTEGRATION_MODE"] = "live"

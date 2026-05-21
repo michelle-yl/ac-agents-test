@@ -21,6 +21,7 @@ from sdl_agents.agents.database.tools import (
     get_latest_service_status,
 )
 from sdl_agents.config import DB_FAST_PATH_ENABLED, DB_FAST_PATH_MAX_ROWS
+from sdl_agents.sources import internal_source
 
 _TOOL_MAP = {
     "get_latest_device_status": get_latest_device_status,
@@ -118,6 +119,10 @@ def _yes_no_fast_path(question: str) -> dict[str, Any] | None:
         "row_count": len(preview),
         "preview_rows": preview,
         "source": "database_fast_path",
+        "sources": [
+            internal_source("monitoring PostgreSQL", prefix="Database"),
+            internal_source("yes_no_online", prefix="Database tool"),
+        ],
         "llm_used": False,
         "tool": "yes_no_online",
     }
@@ -164,6 +169,10 @@ def try_fast_path(question: str) -> dict[str, Any] | None:
         "row_count": len(rows),
         "preview_rows": rows[:10],
         "source": "database_fast_path",
+        "sources": [
+            internal_source("monitoring PostgreSQL", prefix="Database"),
+            internal_source(tool_name, prefix="Database tool"),
+        ],
         "llm_used": False,
         "tool": tool_name,
     }

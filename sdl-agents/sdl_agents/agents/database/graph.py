@@ -19,6 +19,7 @@ from sdl_agents.agents.database.prompts import DB_AGENT_SYSTEM
 from sdl_agents.agents.database.tools import DATABASE_TOOLS
 from sdl_agents.caveman import with_caveman
 from sdl_agents.config import DB_AGENT_MODEL, DB_FAST_PATH_ENABLED
+from sdl_agents.sources import internal_source
 from sdl_agents.state import SDLAgentState
 
 _response_model = None
@@ -86,6 +87,10 @@ def _template_summarize(state: SDLAgentState) -> dict[str, Any]:
         "row_count": len(rows),
         "preview_rows": rows[:10],
         "source": "database_template",
+        "sources": [
+            internal_source("monitoring PostgreSQL", prefix="Database"),
+            internal_source(tool_name, prefix="Database tool"),
+        ],
         "llm_used": False,
     }
     return {
@@ -132,6 +137,10 @@ def summarize_db(state: SDLAgentState) -> dict[str, Any]:
         "row_count": row_count,
         "preview_rows": preview[:10],
         "source": "database_agent",
+        "sources": [
+            internal_source("monitoring PostgreSQL", prefix="Database"),
+            internal_source("database agent tools", prefix="Database tools"),
+        ],
         "llm_used": True,
     }
     return {

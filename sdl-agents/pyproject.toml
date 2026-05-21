@@ -12,7 +12,7 @@ markers = [
     "stage4: specialist and orchestrator tests",
     "stage6: end-to-end tests",
     "stage7: monitoring watcher and cache tests",
-    "integration: requires live Hermes/OpenClaw/DB",
+    "integration: requires live Hermes/DB",
     "slow: slow tests",
 ]
 testpaths = ["tests"]

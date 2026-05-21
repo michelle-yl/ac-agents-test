@@ -93,6 +93,7 @@ def local_docs_dir() -> Path | None:
     return resolved
 
 
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()
 ANTHROPIC_CHAT_MODEL = os.environ.get("ANTHROPIC_CHAT_MODEL", "claude-sonnet-4-6")
 ANTHROPIC_GRADER_MODEL = os.environ.get("ANTHROPIC_GRADER_MODEL", "claude-haiku-4-5")
 HF_EMBEDDING_MODEL = os.environ.get(
@@ -105,15 +106,6 @@ HERMES_API_KEY = os.environ.get("HERMES_API_KEY", "")
 HERMES_MODEL = os.environ.get("HERMES_MODEL", "hermes-agent")
 HERMES_CONNECT_TIMEOUT = float(os.environ.get("HERMES_CONNECT_TIMEOUT", "10"))
 HERMES_READ_TIMEOUT = float(os.environ.get("HERMES_READ_TIMEOUT", "180"))
-OPENCLAW_BASE_URL = os.environ.get("OPENCLAW_BASE_URL", "http://localhost:18789").rstrip(
-    "/"
-)
-OPENCLAW_GATEWAY_TOKEN = (
-    os.environ.get("OPENCLAW_GATEWAY_TOKEN", "").strip()
-    or os.environ.get("OPENCLAW_API_KEY", "").strip()
-)
-OPENCLAW_MODEL = os.environ.get("OPENCLAW_MODEL", "openclaw/default")
-OPENCLAW_WSL_DISTRO = os.environ.get("OPENCLAW_WSL_DISTRO", "Ubuntu").strip()
 
 SAFETY_DOCS_DIR = Path(
     os.environ.get("SAFETY_DOCS_DIR", str(SDL_AGENTS_ROOT / "corpus" / "safety"))
@@ -146,9 +138,8 @@ def _env_truthy(name: str, default: str = "1") -> bool:
     )
 
 
-OPENCLAW_WSL_AUTO = _env_truthy("OPENCLAW_WSL_AUTO", "1")
 HERMES_WSL_AUTO = _env_truthy("HERMES_WSL_AUTO", "1")
-WSL_DISTRO = os.environ.get("WSL_DISTRO", os.environ.get("OPENCLAW_WSL_DISTRO", "Ubuntu")).strip()
+WSL_DISTRO = os.environ.get("WSL_DISTRO", "Ubuntu").strip()
 
 
 def discover_wsl_ipv4(distro: str | None = None) -> str | None:
@@ -195,13 +186,6 @@ def _localhost_wsl_fallback_urls(
     if fallback not in urls:
         urls.append(fallback)
     return urls
-
-
-def openclaw_base_urls() -> list[str]:
-    """Primary OpenClaw base URL plus WSL fallback when localhost fails on Windows."""
-    return _localhost_wsl_fallback_urls(
-        OPENCLAW_BASE_URL, default_port=18789, wsl_auto=OPENCLAW_WSL_AUTO
-    )
 
 
 def hermes_openai_base_urls() -> list[str]:

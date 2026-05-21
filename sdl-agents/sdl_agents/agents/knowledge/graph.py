@@ -21,10 +21,49 @@ from sdl_agents.agents.knowledge.ingest import (
 from sdl_agents.caveman import with_caveman
 from sdl_agents.config import ANTHROPIC_CHAT_MODEL, ANTHROPIC_GRADER_MODEL, HF_EMBEDDING_MODEL
 from sdl_agents.integrations.documents import load_file, to_langchain_documents
+from sdl_agents.sources import append_sources_section, external_source, normalize_source
 
 _retriever = None
 _response_model = None
 _grader_model = None
+
+
+def _format_doc_for_tool(doc) -> str:
+    metadata = dict(getattr(doc, "metadata", None) or {})
+    source_type = metadata.get("source_type") or "internal"
+    label = metadata.get("source") or metadata.get("file") or metadata.get("path") or "unknown"
+    return (
+        f"Source: {label}\n"
+        f"Source type: {source_type}\n"
+        f"Content:\n{doc.page_content}"
+    )
+
+
+def _sources_from_context(context: str) -> list[dict[str, str]]:
+    sources: list[dict[str, str]] = []
+    current_label: str | None = None
+    current_type = "internal"
+    for line in context.splitlines():
+        if line.startswith("Source: "):
+            if current_label:
+                sources.append(
+                    normalize_source(
+                        {"label": current_label, "source_type": current_type},
+                        default_type="internal",
+                    )
+                )
+            current_label = line.removeprefix("Source: ").strip()
+            current_type = "internal"
+        elif line.startswith("Source type: "):
+            current_type = line.removeprefix("Source type: ").strip()
+    if current_label:
+        sources.append(
+            normalize_source(
+                {"label": current_label, "source_type": current_type},
+                default_type="internal",
+            )
+        )
+    return sources
 
 
 def _ensure_retriever():
@@ -65,7 +104,7 @@ def _grader():
 def search_knowledge_base(query: str) -> str:
     """Semantic search over SEED_URLS and LOCAL_DOCS_DIR indexed at startup."""
     ranked = _ensure_retriever().invoke(query)
-    return "\n\n".join(part.page_content for part in ranked)
+    return "\n\n---\n\n".join(_format_doc_for_tool(part) for part in ranked)
 
 
 @tool
@@ -81,7 +120,7 @@ def load_document(file_path: str) -> str:
     pieces = to_langchain_documents(load_file(resolved))
     if not pieces:
         return f"No extractable content from {resolved}; check format."
-    return "\n\n".join(doc.page_content for doc in pieces)
+    return "\n\n---\n\n".join(_format_doc_for_tool(doc) for doc in pieces)
 
 
 GRADE_PROMPT = (
@@ -123,6 +162,16 @@ def generate_query_or_respond(state: MessagesState):
     response = _model().bind_tools([search_knowledge_base, load_document]).invoke(
         with_caveman(state["messages"])
     )
+    if not getattr(response, "tool_calls", None):
+        response.content = append_sources_section(
+            str(response.content),
+            [
+                external_source(
+                    "LLM synthesis only; no retrieved documents were cited.",
+                    prefix="LLM synthesis",
+                )
+            ],
+        )
     return {"messages": [response]}
 
 
@@ -152,6 +201,10 @@ def generate_answer(state: MessagesState):
     context = state["messages"][-1].content
     prompt = GENERATE_PROMPT.format(question=question, context=context)
     response = _model().invoke(with_caveman([{"role": "user", "content": prompt}]))
+    response.content = append_sources_section(
+        str(response.content),
+        _sources_from_context(context),
+    )
     return {"messages": [response]}
 
 

@@ -8,9 +8,14 @@ from typing import Any
 
 import httpx
 
+from sdl_agents.agents.research.external_fallback import (
+    external_fallback_response,
+    internal_context_sufficient,
+)
 from sdl_agents.config import HERMES_READ_TIMEOUT
 from sdl_agents.integrations.hermes_client import run_task
 from sdl_agents.integrations.llamaindex_indices import search_academic
+from sdl_agents.sources import local_chunk_source, normalize_source
 
 ACADEMIC_READ_TIMEOUT = min(HERMES_READ_TIMEOUT, 90.0)
 
@@ -51,10 +56,7 @@ def _rag_only_academic_response(
 
     return {
         "text": text,
-        "sources": [
-            {"file": c.get("metadata", {}).get("file"), "chunk": c.get("text", "")[:200]}
-            for c in chunks
-        ],
+        "sources": [local_chunk_source(c) for c in chunks],
         "citations": chunks,
         "concerns": ["hermes_unavailable"],
         "specialist": "academic",
@@ -63,6 +65,9 @@ def _rag_only_academic_response(
 
 async def run_academic(query: str, db_context: str = "") -> dict[str, Any]:
     chunks = search_academic(query, top_k=3)
+    if not internal_context_sufficient(query, chunks):
+        return await external_fallback_response(query, specialist="academic")
+
     context = json.dumps(chunks, indent=2) if chunks else "No local academic documents indexed."
     if db_context:
         context = f"{context}\n\nMonitoring:\n{db_context}"
@@ -82,11 +87,9 @@ async def run_academic(query: str, db_context: str = "") -> dict[str, Any]:
 
     return {
         "text": result["text"],
-        "sources": result.get("sources", [])
-        + [
-            {"file": c.get("metadata", {}).get("file"), "chunk": c.get("text", "")[:200]}
-            for c in chunks
-        ],
+        "sources": [
+            normalize_source(s) for s in result.get("sources", [])
+        ] + [local_chunk_source(c) for c in chunks],
         "citations": chunks,
         "session_id": result.get("session_id"),
         "specialist": "academic",

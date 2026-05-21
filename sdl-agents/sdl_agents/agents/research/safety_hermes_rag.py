@@ -8,8 +8,13 @@ from typing import Any
 
 import httpx
 
+from sdl_agents.agents.research.external_fallback import (
+    external_fallback_response,
+    internal_context_sufficient,
+)
 from sdl_agents.integrations.hermes_client import run_task
 from sdl_agents.integrations.llamaindex_indices import search_safety
+from sdl_agents.sources import local_chunk_source, normalize_source
 
 def _hermes_degraded(exc: BaseException) -> bool:
     if isinstance(exc, httpx.TimeoutException):
@@ -56,10 +61,7 @@ def _rag_only_safety_response(
 
     return {
         "text": text,
-        "sources": [
-            {"file": c.get("metadata", {}).get("file"), "chunk": c.get("text", "")[:200]}
-            for c in chunks
-        ],
+        "sources": [local_chunk_source(c) for c in chunks],
         "citations": chunks,
         "decision": decision,
         "risk_level": risk_level,
@@ -70,6 +72,13 @@ def _rag_only_safety_response(
 
 async def run_safety(query: str, db_context: str = "") -> dict[str, Any]:
     chunks = search_safety(query, top_k=3)
+    if not internal_context_sufficient(query, chunks):
+        return await external_fallback_response(
+            query,
+            specialist="safety",
+            extra={"decision": "needs_review", "risk_level": "medium"},
+        )
+
     context = json.dumps(chunks, indent=2) if chunks else "No local safety documents indexed."
     if db_context:
         context = f"{context}\n\nMonitoring:\n{db_context}"
@@ -85,11 +94,9 @@ async def run_safety(query: str, db_context: str = "") -> dict[str, Any]:
     parsed = _parse_safety_fields(result["text"])
     return {
         "text": result["text"],
-        "sources": result.get("sources", [])
-        + [
-            {"file": c.get("metadata", {}).get("file"), "chunk": c.get("text", "")[:200]}
-            for c in chunks
-        ],
+        "sources": [
+            normalize_source(s) for s in result.get("sources", [])
+        ] + [local_chunk_source(c) for c in chunks],
         "citations": chunks,
         "decision": parsed.get("decision", "needs_review"),
         "risk_level": parsed.get("risk_level", "medium"),

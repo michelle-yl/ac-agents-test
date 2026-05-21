@@ -32,6 +32,12 @@ def test_router_research_keyword():
 
 
 @pytest.mark.stage4
+def test_router_research_equipment_manual_keyword():
+    d = _keyword_fallback("How do I interpret the robotic arm equipment manual?")
+    assert d.intent == "research"
+
+
+@pytest.mark.stage4
 def test_router_hybrid_keyword():
     d = _keyword_fallback("Is the incubator service up and what are BSL-2 PPE requirements?")
     assert d.intent == "hybrid"
@@ -42,6 +48,7 @@ def test_academic_mock():
     result = run_academic_sync("organoid culture literature")
     assert "text" in result
     assert result.get("sources")
+    assert result["sources"][0]["source_type"] == "internal"
 
 
 @pytest.mark.stage4
@@ -127,6 +134,96 @@ def test_procedures_rag_fallback_when_hermes_unavailable(monkeypatch):
 
 
 @pytest.mark.stage4
+@pytest.mark.parametrize(
+    ("search_path", "runner", "query"),
+    [
+        (
+            "sdl_agents.agents.research.academic_hermes.search_academic",
+            run_academic_sync,
+            "new paper on automated organoid culture",
+        ),
+        (
+            "sdl_agents.agents.research.safety_hermes_rag.search_safety",
+            run_safety_sync,
+            "new formaldehyde safety guidance",
+        ),
+        (
+            "sdl_agents.agents.research.experimental_procedures_hermes.search_procedures",
+            run_procedures_sync,
+            "how to use a UR5 robot arm",
+        ),
+    ],
+)
+def test_research_external_fallback_when_internal_empty(monkeypatch, search_path, runner, query):
+    async def _web_answer(_query: str, *, specialist: str):
+        return {
+            "text": f"External {specialist} answer",
+            "sources": [
+                {
+                    "source_type": "external",
+                    "label": "https://example.com/source",
+                    "url": "https://example.com/source",
+                }
+            ],
+            "external_used": True,
+        }
+
+    monkeypatch.setattr(search_path, lambda _q, top_k=3: [])
+    monkeypatch.setattr(
+        "sdl_agents.agents.research.external_fallback.query_external_research",
+        _web_answer,
+    )
+
+    result = runner(query)
+    assert result["external_used"] is True
+    assert result["sources"][0]["source_type"] == "external"
+    assert "https://example.com/source" in result["sources"][0]["label"]
+    assert not any(s.get("source_type") == "internal" for s in result["sources"])
+
+
+@pytest.mark.stage4
+def test_orchestrator_external_fallback_sources_render(monkeypatch):
+    async def _web_answer(_query: str, *, specialist: str):
+        return {
+            "text": "External safety answer",
+            "sources": [
+                {
+                    "source_type": "external",
+                    "label": "https://example.com/safety",
+                    "url": "https://example.com/safety",
+                }
+            ],
+            "external_used": True,
+        }
+
+    monkeypatch.setattr(
+        "sdl_agents.agents.research.safety_hermes_rag.search_safety",
+        lambda _q, top_k=3: [],
+    )
+    monkeypatch.setattr(
+        "sdl_agents.agents.research.external_fallback.query_external_research",
+        _web_answer,
+    )
+    graph = build_orchestrator_graph()
+    result = graph.invoke(
+        {
+            "messages": [HumanMessage(content="what ppe for new formaldehyde guidance?")],
+            "intent": "general",
+            "route_reason": "",
+            "db_payload": None,
+            "monitor_cache_used": False,
+            "research_payload": None,
+            "research_flags": {},
+            "errors": [],
+        }
+    )
+    body = result["messages"][-1].content
+    assert "## Sources" in body
+    assert "Internal sources: none" in body
+    assert "https://example.com/safety" in body
+
+
+@pytest.mark.stage4
 def test_research_flags_safety_only():
     flags = classify_research_subagent_text("what ppe for bsl2?")
     assert flags["needs_safety"] is True
@@ -155,6 +252,8 @@ def test_orchestrator_research_safety_only_payload():
     body = result["messages"][-1].content
     assert "## Safety protocols" in body
     assert "## Academic literature" not in body
+    assert "## Sources" in body
+    assert "Internal sources:" in body
 
 
 @pytest.mark.stage4

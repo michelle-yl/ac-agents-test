@@ -40,6 +40,17 @@ def test_research_subagent_procedures_only():
 
 
 @pytest.mark.stage4
+def test_research_subagent_equipment_manual_procedures_only():
+    d = classify_research_subagent_keyword(
+        "How do I interpret the liquid handler manual for robotic arm calibration?"
+    )
+    assert d is not None
+    assert d.needs_academic is False
+    assert d.needs_safety is False
+    assert d.needs_procedures is True
+
+
+@pytest.mark.stage4
 def test_research_subagent_all_three():
     d = classify_research_subagent_keyword(
         "BSL-2 PPE for formaldehyde and steps for serial dilution in a 96-well plate"
